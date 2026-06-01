@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#8B3A2A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="দৈনিক হিসাব">
+<link rel="manifest" href="./manifest.json">
+<title>দৈনিক হিসাব</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:root{
+  --pr:#8B3A2A;--prl:#C4654A;--bg:#FDF6F0;--card:#FFFAF7;
+  --border:#E8D5C8;--text:#2C1810;--muted:#9B7B6A;
+  --yes:#1E7E4A;--yes-bg:#E6F4ED;--no:#C0392B;--no-bg:#FDEAEA;--neu:#6B5E57;--neu-bg:#F5F0EE;
+}
+body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:72px}
+
+/* HEADER */
+.hdr{background:var(--pr);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+.hdr-title{font-size:18px;font-weight:700;letter-spacing:.3px}
+.hdr-date{font-size:12px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:5px 10px;border-radius:16px;cursor:pointer}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100}
+.bnav-btn{flex:1;padding:10px 4px 8px;border:none;background:none;font-size:10px;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bnav-btn .ico{font-size:20px;line-height:1}
+.bnav-btn.active{color:var(--pr)}
+
+/* PAGES */
+.pg{display:none;padding:12px 14px}
+.pg.active{display:block}
+
+/* SECTION TITLE */
+.stitle{font-size:13px;font-weight:700;color:var(--pr);text-transform:uppercase;letter-spacing:.8px;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--border)}
+
+/* ENTRY CARD */
+.entry-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.entry-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px}
+.entry-row:last-child{border-bottom:none}
+.row-info{flex:1;min-width:0}
+.row-name{font-size:14px;font-weight:600;color:var(--text)}
+.row-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.row-ctrl{flex-shrink:0}
+
+/* NUMBER INPUT */
+.num-wrap{display:flex;align-items:center;gap:6px}
+.nbtn{width:34px;height:34px;border-radius:50%;border:2px solid var(--pr);background:none;color:var(--pr);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;transition:.1s}
+.nbtn:active{background:var(--pr);color:#fff;transform:scale(.9)}
+.nval{min-width:40px;text-align:center;font-size:18px;font-weight:700;color:var(--text)}
+
+/* YES/NO TOGGLE */
+.yn-wrap{display:flex;gap:6px}
+.yn-btn{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:none;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;color:var(--muted)}
+.yn-btn.yes{background:var(--yes-bg);border-color:var(--yes);color:var(--yes)}
+.yn-btn.no{background:var(--no-bg);border-color:var(--no);color:var(--no)}
+
+/* META INPUTS */
+.meta-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.meta-inp{flex:1;min-width:120px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);outline:none}
+.meta-inp:focus{border-color:var(--pr)}
+
+/* SAVE BTN */
+.save-btn{width:100%;padding:14px;background:var(--pr);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:.3px}
+.save-btn:active{opacity:.8}
+
+/* NOTES */
+.notes-area{width:100%;min-height:90px;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--card);color:var(--text);resize:none;outline:none}
+.notes-area:focus{border-color:var(--pr)}
+
+/* SUMMARY */
+.sum-header{background:var(--pr);color:#fff;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center}
+.sum-big{font-size:42px;font-weight:800;line-height:1}
+.sum-label{font-size:13px;opacity:.85;margin-top:4px}
+.pbar{height:8px;background:rgba(255,255,255,.3);border-radius:4px;margin-top:12px;overflow:hidden}
+.pfill{height:100%;background:#fff;border-radius:4px;transition:width .4s}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.stat-num{font-size:26px;font-weight:800;color:var(--pr)}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* MONTHLY TABLE */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.tbl-head{background:var(--pr);color:#fff;display:grid;font-size:10px;font-weight:700;text-align:center}
+.tbl-row{display:grid;font-size:11px;text-align:center;border-bottom:1px solid var(--border)}
+.tbl-row:last-child{border-bottom:none}
+.tbl-row:nth-child(even){background:#FDF6F0}
+.tbl-cell{padding:8px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl-cell.date-cell{font-weight:600;color:var(--pr)}
+.badge{display:inline-block;padding:2px 6px;border-radius:8px;font-size:10px;font-weight:600}
+.badge.y{background:var(--yes-bg);color:var(--yes)}
+.badge.n{background:var(--no-bg);color:var(--no)}
+.badge.dash{background:var(--neu-bg);color:var(--neu)}
+
+/* DATE PICKER */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end}
+.overlay.show{display:flex}
+.sheet{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto}
+.sheet h3{font-size:15px;text-align:center;margin-bottom:14px;font-weight:700}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav button{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 14px;cursor:pointer;font-size:16px}
+.cal-nav span{font-size:14px;font-weight:700}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal-dn{font-size:10px;color:var(--muted);padding:3px 0}
+.cal-d{padding:8px 2px;border-radius:8px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--text);position:relative}
+.cal-d.today{background:var(--pr);color:#fff;font-weight:700}
+.cal-d.sel{outline:2px solid var(--pr)}
+.cal-d.hd::after{content:'';position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--prl)}
+.cal-d.emp{visibility:hidden}
+.close-btn{width:100%;padding:12px;background:#f0ebe8;color:var(--text);border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px}
+
+/* TOAST */
+.toast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">📿 দৈনিক হিসাব</div>
+  <button class="hdr-date" onclick="openCal()">📅 <span id="hdrDate"></span></button>
+</div>
+
+<!-- PAGE: INPUT -->
+<div class="pg active" id="pg-input">
+
+  <div class="stitle">📋 তথ্য</div>
+  <div class="meta-row">
+    <input class="meta-inp" id="meta-name" placeholder="নাম" type="text">
+    <input class="meta-inp" id="meta-inst" placeholder="শিক্ষা প্রতিষ্ঠান" type="text">
+  </div>
+  <div class="meta-row">
+    <input class="meta-inp" id="meta-class" placeholder="ক্লাস / বছর" type="text">
+    <input class="meta-inp" id="meta-month" placeholder="মাস ও বছর" type="text">
+  </div>
+
+  <div class="stitle">📖 পড়াশোনা</div>
+  <div class="entry-card">
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">কুরআন</div>
+        <div class="row-sub">আজ কতটুকু পড়েছেন (সংখ্যা)</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="num-wrap">
+          <button class="nbtn" onclick="chg('quran',-1)">−</button>
+          <div class="nval" id="v-quran">০</div>
+          <button class="nbtn" onclick="chg('quran',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">হাদিস</div>
+        <div class="row-sub">আজ কতটি পড়েছেন (সংখ্যা)</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="num-wrap">
+          <button class="nbtn" onclick="chg('hadis',-1)">−</button>
+          <div class="nval" id="v-hadis">০</div>
+          <button class="nbtn" onclick="chg('hadis',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">ইসলামী সাহিত্য</div>
+        <div class="row-sub">আজ কত পৃষ্ঠা পড়েছেন (সংখ্যা)</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="num-wrap">
+          <button class="nbtn" onclick="chg('islami',-1)">−</button>
+          <div class="nval" id="v-islami">০</div>
+          <button class="nbtn" onclick="chg('islami',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">পাঠ্যপুস্তক</div>
+        <div class="row-sub">আজ কত ঘণ্টা পড়েছেন</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="num-wrap">
+          <button class="nbtn" onclick="chg('pathya',-1)">−</button>
+          <div class="nval" id="v-pathya">০</div>
+          <button class="nbtn" onclick="chg('pathya',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">নামাজ</div>
+        <div class="row-sub">আজ কত ওয়াক্ত আদায় করেছেন</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="num-wrap">
+          <button class="nbtn" onclick="chg('namaz',-1)">−</button>
+          <div class="nval" id="v-namaz">০</div>
+          <button class="nbtn" onclick="chg('namaz',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">বন্ধু যোগাযোগ</div>
+        <div class="row-sub">আজ কতজনের সাথে (সংখ্যা)</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="num-wrap">
+          <button class="nbtn" onclick="chg('bondu',-1)">−</button>
+          <div class="nval" id="v-bondu">০</div>
+          <button class="nbtn" onclick="chg('bondu',1)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stitle">✅ দৈনিক কাজ</div>
+  <div class="entry-card">
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">ক্লাস উপস্থিতি</div>
+        <div class="row-sub">আজ ক্লাসে ছিলেন?</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="yn-wrap">
+          <button class="yn-btn" id="yn-class-yes" onclick="setYN('class','yes')">হ্যাঁ</button>
+          <button class="yn-btn" id="yn-class-no" onclick="setYN('class','no')">না</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">পত্রিকা পাঠ</div>
+        <div class="row-sub">আজ পত্রিকা পড়েছেন?</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="yn-wrap">
+          <button class="yn-btn" id="yn-potrika-yes" onclick="setYN('potrika','yes')">হ্যাঁ</button>
+          <button class="yn-btn" id="yn-potrika-no" onclick="setYN('potrika','no')">না</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">শরীরচর্চা</div>
+        <div class="row-sub">আজ ব্যায়াম করেছেন?</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="yn-wrap">
+          <button class="yn-btn" id="yn-shoreer-yes" onclick="setYN('shoreer','yes')">হ্যাঁ</button>
+          <button class="yn-btn" id="yn-shoreer-no" onclick="setYN('shoreer','no')">না</button>
+        </div>
+      </div>
+    </div>
+    <div class="entry-row">
+      <div class="row-info">
+        <div class="row-name">আত্মসমালোচনা</div>
+        <div class="row-sub">আজ আত্মসমালোচনা করেছেন?</div>
+      </div>
+      <div class="row-ctrl">
+        <div class="yn-wrap">
+          <button class="yn-btn" id="yn-atmo-yes" onclick="setYN('atmo','yes')">হ্যাঁ</button>
+          <button class="yn-btn" id="yn-atmo-no" onclick="setYN('atmo','no')">না</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stitle">📝 মন্তব্য / নোট</div>
+  <textarea class="notes-area" id="notes" placeholder="আজকের বিশেষ কোনো নোট লিখুন..."></textarea>
+
+  <div style="height:12px"></div>
+  <button class="save-btn" onclick="saveDay()">💾 আজকের হিসাব সংরক্ষণ</button>
+  <div style="height:8px"></div>
+</div>
+
+<!-- PAGE: SUMMARY -->
+<div class="pg" id="pg-sum">
+  <div class="sum-header">
+    <div class="sum-big" id="sum-score">০%</div>
+    <div class="sum-label">আজকের সামগ্রিক স্কোর</div>
+    <div class="pbar"><div class="pfill" id="sum-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="st-namaz">০/৫</div><div class="stat-lbl">নামাজ</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-quran">০</div><div class="stat-lbl">কুরআন</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-pathya">০ ঘণ্টা</div><div class="stat-lbl">পাঠ্যপুস্তক</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-bondu">০</div><div class="stat-lbl">বন্ধু যোগাযোগ</div></div>
+  </div>
+
+  <div class="stitle">📅 সাপ্তাহিক চিত্র</div>
+  <div id="week-view"></div>
+
+  <div class="stitle">🏆 এই মাসের পরিসংখ্যান</div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="st-days">০</div><div class="stat-lbl">দিন রেকর্ড</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-avg">০%</div><div class="stat-lbl">গড় স্কোর</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-streak">০</div><div class="stat-lbl">ধারাবাহিক দিন</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-tnamaz">০</div><div class="stat-lbl">মোট নামাজ</div></div>
+  </div>
+</div>
+
+<!-- PAGE: TABLE -->
+<div class="pg" id="pg-table">
+  <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select id="tbl-month-sel" onchange="renderTable()" style="flex:1;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--card);color:var(--text);outline:none"></select>
+  </div>
+  <div id="tbl-container"></div>
+</div>
+
+<!-- DATE PICKER -->
+<div class="overlay" id="calOverlay" onclick="closeCal(event)">
+  <div class="sheet">
+    <h3>তারিখ বেছে নিন</h3>
+    <div class="cal-nav">
+      <button onclick="calChgMonth(-1)">‹</button>
+      <span id="calLabel"></span>
+      <button onclick="calChgMonth(1)">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <button class="close-btn" onclick="closeCal()">বন্ধ করুন</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="bnav-btn active" id="bn-input" onclick="goPage('input')">
+    <span class="ico">✏️</span>আজকের হিসাব
+  </button>
+  <button class="bnav-btn" id="bn-sum" onclick="goPage('sum')">
+    <span class="ico">📊</span>সারসংক্ষেপ
+  </button>
+  <button class="bnav-btn" id="bn-table" onclick="goPage('table')">
+    <span class="ico">📋</span>মাসিক তালিকা
+  </button>
+</div>
+
+<script>
+// ── COLUMNS ──
+const COLS = [
+  {key:'quran',  label:'কুরআন',        type:'num'},
+  {key:'hadis',  label:'হাদিস',         type:'num'},
+  {key:'islami', label:'ইসলামী সাহিত্য',type:'num'},
+  {key:'pathya', label:'পাঠ্যপুস্তক (ঘণ্টা)',type:'num'},
+  {key:'namaz',  label:'নামাজ',         type:'num'},
+  {key:'bondu',  label:'বন্ধু যোগাযোগ', type:'num'},
+  {key:'class',  label:'ক্লাস উপস্থিতি',type:'yn'},
+  {key:'potrika',label:'পত্রিকা পাঠ',   type:'yn'},
+  {key:'shoreer',label:'শরীরচর্চা',      type:'yn'},
+  {key:'atmo',   label:'আত্মসমালোচনা',  type:'yn'},
+];
+
+let curDate = todayStr();
+let calY, calM;
+
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function bn(n){return String(n).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d])}
+function fmtDate(s){
+  if(!s)return'';
+  const [y,m,d]=s.split('-');
+  const mn=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  return `${bn(+d)} ${mn[+m-1]}, ${bn(+y)}`;
+}
+function fmtShort(s){
+  if(!s)return'';
+  const [y,m,d]=s.split('-');
+  return `${bn(+d)}/${bn(+m)}`;
+}
+
+function emptyDay(){
+  const o={notes:'',meta:{name:'',inst:'',class:'',month:''}};
+  COLS.forEach(c=>{o[c.key]=c.type==='num'?0:null});
+  return o;
+}
+function getDay(date){
+  const r=localStorage.getItem('hisab2_'+date);
+  return r?Object.assign(emptyDay(),JSON.parse(r)):emptyDay();
+}
+function setDay(date,data){localStorage.setItem('hisab2_'+date,JSON.stringify(data))}
+function allDates(){
+  const ks=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('hisab2_'))ks.push(k.replace('hisab2_',''));
+  }
+  return ks.sort().reverse();
+}
+
+function score(data){
+  let e=0,t=0;
+  COLS.forEach(c=>{
+    if(c.type==='num'){
+      if(c.key==='namaz'){t+=5;e+=Math.min(data[c.key]||0,5);}
+      else{t+=1;if((data[c.key]||0)>0)e++;}
+    } else {
+      t+=1;if(data[c.key]==='yes')e++;
+    }
+  });
+  return t>0?Math.round(e/t*100):0;
+}
+
+// ── RENDER INPUT ──
+function renderInput(){
+  const data=getDay(curDate);
+  document.getElementById('hdrDate').textContent=fmtDate(curDate);
+  document.getElementById('meta-name').value=data.meta.name||'';
+  document.getElementById('meta-inst').value=data.meta.inst||'';
+  document.getElementById('meta-class').value=data.meta.class||'';
+  document.getElementById('meta-month').value=data.meta.month||'';
+  COLS.forEach(c=>{
+    if(c.type==='num'){
+      document.getElementById('v-'+c.key).textContent=bn(data[c.key]||0);
+    } else {
+      const v=data[c.key];
+      const yb=document.getElementById('yn-'+c.key+'-yes');
+      const nb=document.getElementById('yn-'+c.key+'-no');
+      yb.className='yn-btn'+(v==='yes'?' yes':'');
+      nb.className='yn-btn'+(v==='no'?' no':'');
+    }
+  });
+  document.getElementById('notes').value=data.notes||'';
+}
+
+function chg(key,delta){
+  const data=getDay(curDate);
+  data[key]=Math.max(0,(data[key]||0)+delta);
+  setDay(curDate,data);
+  document.getElementById('v-'+key).textContent=bn(data[key]);
+}
+
+function setYN(key,val){
+  const data=getDay(curDate);
+  data[key]=data[key]===val?null:val;
+  setDay(curDate,data);
+  const yb=document.getElementById('yn-'+key+'-yes');
+  const nb=document.getElementById('yn-'+key+'-no');
+  yb.className='yn-btn'+(data[key]==='yes'?' yes':'');
+  nb.className='yn-btn'+(data[key]==='no'?' no':'');
+}
+
+function saveDay(){
+  const data=getDay(curDate);
+  data.meta={
+    name:document.getElementById('meta-name').value,
+    inst:document.getElementById('meta-inst').value,
+    class:document.getElementById('meta-class').value,
+    month:document.getElementById('meta-month').value,
+  };
+  data.notes=document.getElementById('notes').value;
+  setDay(curDate,data);
+  toast('✅ সংরক্ষণ হয়েছে!');
+}
+
+// ── RENDER SUMMARY ──
+function renderSum(){
+  const data=getDay(curDate);
+  const sc=score(data);
+  document.getElementById('sum-score').textContent=bn(sc)+'%';
+  document.getElementById('sum-fill').style.width=sc+'%';
+  document.getElementById('st-namaz').textContent=bn(data.namaz||0)+'/'+bn(5);
+  document.getElementById('st-quran').textContent=bn(data.quran||0);
+  document.getElementById('st-pathya').textContent=bn(data.pathya||0)+' ঘণ্টা';
+  document.getElementById('st-bondu').textContent=bn(data.bondu||0);
+  renderWeek();
+  renderMonthStats();
+}
+
+function renderWeek(){
+  const days=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const dn=['র','স','ম','ব','বৃ','শু','শ'];
+  const html=`<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">
+  ${days.map(d=>{
+    const sc=score(getDay(d));
+    const isCur=d===curDate;
+    const dd=new Date(d);
+    const color=sc>=80?'#1E7E4A':sc>=50?'#E67E22':sc>0?'#C0392B':'var(--border)';
+    return `<div onclick="curDate='${d}';renderAll()" style="cursor:pointer">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">${dn[dd.getDay()]}</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:9px;font-weight:700;color:${sc>0?'#fff':'var(--muted)'};border:${isCur?'3px solid var(--pr)':'2px solid transparent'}">
+        ${sc>0?bn(sc)+'%':''}
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:3px">${bn(dd.getDate())}</div>
+    </div>`;
+  }).join('')}
+  </div></div>`;
+  document.getElementById('week-view').innerHTML=html;
+}
+
+function renderMonthStats(){
+  const now=new Date();
+  const tm=now.toISOString().slice(0,7);
+  const mds=allDates().filter(d=>d.startsWith(tm));
+  let ts=0,tn=0,streak=0;
+  mds.forEach(d=>{const dat=getDay(d);ts+=score(dat);tn+=(dat.namaz||0);});
+  let cd=new Date();
+  while(true){
+    const ds=cd.toISOString().slice(0,10);
+    if(!localStorage.getItem('hisab2_'+ds))break;
+    streak++;cd.setDate(cd.getDate()-1);
+  }
+  document.getElementById('st-days').textContent=bn(mds.length);
+  document.getElementById('st-avg').textContent=mds.length?bn(Math.round(ts/mds.length))+'%':'০%';
+  document.getElementById('st-streak').textContent=bn(streak);
+  document.getElementById('st-tnamaz').textContent=bn(tn);
+}
+
+// ── RENDER TABLE ──
+function renderTable(){
+  const sel=document.getElementById('tbl-month-sel');
+  const selectedMonth=sel.value;
+  const dates=allDates().filter(d=>d.startsWith(selectedMonth));
+  
+  if(!dates.length){
+    document.getElementById('tbl-container').innerHTML=`<div style="text-align:center;color:var(--muted);padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">📋</div>এই মাসে কোনো রেকর্ড নেই</div>`;
+    return;
+  }
+
+  // Header: তারিখ + 10 cols + মন্তব্য
+  const colW = `grid-template-columns: 52px repeat(${COLS.length}, 1fr) 80px`;
+
+  let html=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <div class="tbl-wrap" style="min-width:700px">
+  <div class="tbl-head" style="${colW}">
+    <div class="tbl-cell">তারিখ</div>
+    ${COLS.map(c=>`<div class="tbl-cell" style="font-size:9px;padding:6px 2px">${c.label}</div>`).join('')}
+    <div class="tbl-cell">মন্তব্য</div>
+  </div>`;
+
+  dates.forEach(d=>{
+    const data=getDay(d);
+    const dd=new Date(d);
+    html+=`<div class="tbl-row" style="${colW}" onclick="curDate='${d}';renderAll();goPage('input')">
+      <div class="tbl-cell date-cell" style="font-size:10px">${fmtShort(d)}</div>
+      ${COLS.map(c=>{
+        if(c.type==='num'){
+          return `<div class="tbl-cell">${bn(data[c.key]||0)}</div>`;
+        } else {
+          const v=data[c.key];
+          const badge=v==='yes'?`<span class="badge y">হ্যাঁ</span>`:v==='no'?`<span class="badge n">না</span>`:`<span class="badge dash">-</span>`;
+          return `<div class="tbl-cell">${badge}</div>`;
+        }
+      }).join('')}
+      <div class="tbl-cell" style="font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis">${data.notes?data.notes.slice(0,12)+'…':'-'}</div>
+    </div>`;
+  });
+
+  // মোট সারি
+  html+=`<div class="tbl-row" style="${colW};background:#FDF0E8;font-weight:700">
+    <div class="tbl-cell" style="font-size:10px;color:var(--pr)">মোট</div>
+    ${COLS.map(c=>{
+      if(c.type==='num'){
+        const total=dates.reduce((s,d)=>s+(getDay(d)[c.key]||0),0);
+        return `<div class="tbl-cell" style="color:var(--pr)">${bn(total)}</div>`;
+      } else {
+        const yesCount=dates.filter(d=>getDay(d)[c.key]==='yes').length;
+        return `<div class="tbl-cell" style="color:var(--yes);font-size:11px">${bn(yesCount)}/${bn(dates.length)}</div>`;
+      }
+    }).join('')}
+    <div class="tbl-cell">-</div>
+  </div>`;
+
+  html+=`</div></div>`;
+  document.getElementById('tbl-container').innerHTML=html;
+}
+
+function populateMonthSel(){
+  const sel=document.getElementById('tbl-month-sel');
+  const dates=allDates();
+  const months=new Set();
+  dates.forEach(d=>months.add(d.slice(0,7)));
+  const cur=new Date().toISOString().slice(0,7);
+  months.add(cur);
+  const mn=['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+  sel.innerHTML=[...months].sort().reverse().map(m=>{
+    const [y,mo]=m.split('-');
+    return `<option value="${m}" ${m===cur?'selected':''}>${mn[+mo-1]} ${bn(+y)}</option>`;
+  }).join('');
+}
+
+// ── CALENDAR ──
+function openCal(){
+  const d=new Date(curDate);
+  calY=d.getFullYear();calM=d.getMonth();
+  renderCal();
+  document.getElementById('calOverlay').classList.add('show');
+}
+function closeCal(e){
+  if(!e||e.target.id==='calOverlay'||!e.target.closest('.sheet')){
+    document.getElementById('calOverlay').classList.remove('show');
+  }
+}
+function calChgMonth(d){
+  calM+=d;
+  if(calM<0){calM=11;calY--;}
+  if(calM>11){calM=0;calY++;}
+  renderCal();
+}
+function renderCal(){
+  const mn=['জানু','ফেব্রু','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টে','অক্টো','নভে','ডিসে'];
+  document.getElementById('calLabel').textContent=mn[calM]+' '+bn(calY);
+  const dn=['র','স','ম','ব','বৃ','শু','শ'];
+  const today=todayStr();
+  const first=new Date(calY,calM,1).getDay();
+  const dim=new Date(calY,calM+1,0).getDate();
+  let h=dn.map(d=>`<div class="cal-dn">${d}</div>`).join('');
+  for(let i=0;i<first;i++)h+=`<div class="cal-d emp"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hd=!!localStorage.getItem('hisab2_'+ds);
+    const isT=ds===today,isSel=ds===curDate;
+    h+=`<button class="cal-d ${isT?'today':''} ${isSel&&!isT?'sel':''} ${hd?'hd':''}"
+      onclick="curDate='${ds}';renderAll();closeCal()">${bn(d)}</button>`;
+  }
+  document.getElementById('calGrid').innerHTML=h;
+}
+
+// ── NAV ──
+function goPage(p){
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.bnav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('pg-'+p).classList.add('active');
+  document.getElementById('bn-'+p).classList.add('active');
+  if(p==='sum')renderSum();
+  if(p==='table'){populateMonthSel();renderTable();}
+}
+
+function renderAll(){renderInput();}
+
+// ── TOAST ──
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── AUTO SAVE META+NOTES ──
+['meta-name','meta-inst','meta-class','meta-month'].forEach(id=>{
+  document.getElementById(id).addEventListener('blur',()=>{
+    const data=getDay(curDate);
+    data.meta={
+      name:document.getElementById('meta-name').value,
+      inst:document.getElementById('meta-inst').value,
+      class:document.getElementById('meta-class').value,
+      month:document.getElementById('meta-month').value,
+    };
+    setDay(curDate,data);
+  });
+});
+document.getElementById('notes').addEventListener('blur',()=>{
+  const data=getDay(curDate);
+  data.notes=document.getElementById('notes').value;
+  setDay(curDate,data);
+});
+
+// ── SERVICE WORKER ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
+// ── INIT ──
+renderAll();
+</script>
+</body>
+</html>
